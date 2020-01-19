@@ -153,19 +153,16 @@ char* ecb_192_encrypt(char *plaintextstring, char *keystring)
 	__m128i ka, kb = _mm_setzero_si128();
 	__m128i ct;
 	
-	int keylength = 128;
+	int keylength = 192;
 	keyleft       = get_m128i_variable_from_chararray(keystring);
 	keyright      = get_kr_for_192keylength(keystring);
-	
-	//print128_num (keyleft);
-	//print128_num (keyright);
-	
+
 	ka = key_schedule1 (keyleft, keyright);
 	kb = key_schedule2 (ka, keyleft, keyright);
 	
 	plainText = get_m128i_variable_from_chararray(plaintextstring);
 	
-    ct = encrypt (plainText, key, keyright, ka, kb, keylength);
+    ct = encrypt (plainText, keyleft, keyright, ka, kb, keylength);
     
     print128_num (ct);
 	
@@ -181,7 +178,7 @@ char* ecb_256_encrypt(char *plainText, char *key)
 	__m128i ka, kb = _mm_setzero_si128();
 	__m128i ct;
 	
-	int keylength = 128;
+	int keylength = 256;
 	key       = get_m128i_variable_from_chararray(keystring);
 	ka = key_schedule1 (key, keyright);
 	

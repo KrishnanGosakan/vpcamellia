@@ -406,10 +406,10 @@ __m128i key_schedule1(__m128i keyleft, __m128i keyright)
 	{
 		//1.extract left 64 bits of ka
 		x = _mm_shuffle_epi8 (ka, kaleftextracter);
-		
+
 		//2.apply f function on x and ksconstant[i]
 		x = f (x, ksconstant[i]);
-		
+
 		//3.move f result to lower half of x
 		x = _mm_shuffle_epi8 (x, xresshuffle);
 		
@@ -429,7 +429,7 @@ __m128i key_schedule1(__m128i keyleft, __m128i keyright)
 
 		//2.apply f function on x and ksconstant[i]
 		x = f (x, ksconstant[i]);
-		
+
 		//3.move f result to lower half of x
 		x = _mm_shuffle_epi8 (x, xresshuffle);
 		
@@ -447,23 +447,23 @@ __m128i key_schedule2(__m128i ka, __m128i keyleft, __m128i keyright)
 {
 	__m128i kb;
 	__m128i ksconstant[2];
+
+	uint8_t ksconstant1scalar[] = {0x10, 0xe5, 0x27, 0xfa, 0xde, 0x68, 0x2d, 0x1d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	uint8_t ksconstant2scalar[] = {0xb0, 0x56, 0x88, 0xc2, 0xb3, 0xe6, 0xc1, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	
-	uint8_t ksconstant1scalar[] = {0x1d, 0x2d, 0x68, 0xde, 0xfa, 0x27, 0xe5, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	uint8_t ksconstant2scalar[] = {0xfd, 0xc1, 0xe6, 0xb3, 0xc2, 0x88, 0x56, 0xb0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	
-	ksconstant[0] = _mm_loadu_si128((const __m128i*)ksconstant1scalar);
-	ksconstant[1] = _mm_loadu_si128((const __m128i*)ksconstant2scalar);
+	ksconstant[0] = get_m128i_variable_from_uint8_array (ksconstant1scalar);
+	ksconstant[1] = get_m128i_variable_from_uint8_array (ksconstant2scalar);
 	
 	//initial xor
 	kb = _mm_xor_si128 (ka, keyright); //kb = ka ^ kr
-	
-	uint8_t kaleftextracterscalar[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x05, 0x06, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+	uint8_t kaleftextracterscalar[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80};
 	__m128i kaleftextracter = _mm_loadu_si128((const __m128i*)kaleftextracterscalar);
 	
-	uint8_t xresshufflescalar[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x05, 0x06, 0x07};
+	uint8_t xresshufflescalar[] = {0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
 	__m128i xresshuffle = _mm_loadu_si128((const __m128i*)xresshufflescalar);
 	
-	uint8_t kbquadexchangescalar[] = {0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x05, 0x06, 0x07};
+	uint8_t kbquadexchangescalar[] = {0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
 	__m128i kbquadexchange = _mm_loadu_si128((const __m128i*)kbquadexchangescalar);
 	
 	//store result of f function in variable x
@@ -474,10 +474,10 @@ __m128i key_schedule2(__m128i ka, __m128i keyleft, __m128i keyright)
 	{
 		//1.extract left 64 bits of kb
 		x = _mm_shuffle_epi8 (kb, kaleftextracter);
-		
+
 		//2.apply f function on x and ksconstant[i]
 		x = f (x, ksconstant[i]);
-		
+
 		//3.move f result to lower half of x
 		x = _mm_shuffle_epi8 (x, xresshuffle);
 		
@@ -628,7 +628,105 @@ __m128i getroundkey(int keyid, __m128i kl, __m128i kr, __m128i ka, __m128i kb, i
 	}
 	else
 	{
-		
+		switch(keyid)
+		{
+			case 1:
+				roundkey = doleftrotation (kb, 0);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 2:
+				roundkey = doleftrotation (kb, 0);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 3:
+				roundkey = doleftrotation (kr, 15);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 4:
+				roundkey = doleftrotation (kr, 15);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 5:
+				roundkey = doleftrotation (ka, 15);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 6:
+				roundkey = doleftrotation (ka, 15);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 7:
+				roundkey = doleftrotation (kb, 30);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 8:
+				roundkey = doleftrotation (kb, 30);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 9:
+				roundkey = doleftrotation (kl, 45);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 10:
+				roundkey = doleftrotation (kl, 45);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 11:
+				roundkey = doleftrotation (ka, 45);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 12:
+				roundkey = doleftrotation (ka, 45);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 13:
+				roundkey = doleftrotation (kr, 60);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 14:
+				roundkey = doleftrotation (kr, 60);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 15:
+				roundkey = doleftrotation (kb, 60);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 16:
+				roundkey = doleftrotation (kb, 60);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 17:
+				roundkey = doleftrotation (kl, 77);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 18:
+				roundkey = doleftrotation (kl, 77);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 19:
+				roundkey = doleftrotation (kr, 94);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 20:
+				roundkey = doleftrotation (kr, 94);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 21:
+				roundkey = doleftrotation (ka, 94);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 22:
+				roundkey = doleftrotation (ka, 94);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+			case 23:
+				roundkey = doleftrotation (kl, 111);
+				roundkey = _mm_shuffle_epi8 (roundkey, leftextracter);
+				break;
+			case 24:
+				roundkey = doleftrotation (kl, 111);
+				roundkey = _mm_shuffle_epi8 (roundkey, rightextracter);
+				break;
+		}
 	}
 	
 	return roundkey;
@@ -707,10 +805,10 @@ __m128i encrypt(__m128i plaintext, __m128i kl, __m128i kr, __m128i ka, __m128i k
 		
 		//2.2 extract left 64 bits of cipher text
 		lefthalf = _mm_shuffle_epi8 (ciphertext, ctleftextracter);
-		
+
 		//2.3 apply f function on lefthalf and roundkey
 		lefthalf = f (lefthalf, roundkey);
-		
+
 		//2.4 swap quadwords of lefthalf
 		lefthalf = _mm_shuffle_epi8 (lefthalf, lhquadexchange);
 		
@@ -736,10 +834,10 @@ __m128i encrypt(__m128i plaintext, __m128i kl, __m128i kr, __m128i ka, __m128i k
 		
 		//4.2 extract left 64 bits of cipher text
 		lefthalf = _mm_shuffle_epi8 (ciphertext, ctleftextracter);
-		
+
 		//4.3 apply f function on lefthalf and roundkey
 		lefthalf = f (lefthalf, roundkey);
-		
+
 		//4.4 swap quadwords of lefthalf
 		lefthalf = _mm_shuffle_epi8 (lefthalf, lhquadexchange);
 		
@@ -765,10 +863,10 @@ __m128i encrypt(__m128i plaintext, __m128i kl, __m128i kr, __m128i ka, __m128i k
 		
 		//6.2 extract left 64 bits of cipher text
 		lefthalf = _mm_shuffle_epi8 (ciphertext, ctleftextracter);
-		
+
 		//6.3 apply f function on lefthalf and roundkey
 		lefthalf = f (lefthalf, roundkey);
-		
+
 		//6.4 swap quadwords of lefthalf
 		lefthalf = _mm_shuffle_epi8 (lefthalf, lhquadexchange);
 		
@@ -778,7 +876,7 @@ __m128i encrypt(__m128i plaintext, __m128i kl, __m128i kr, __m128i ka, __m128i k
 		//6.6 swap quadwords of ciphertext
 		ciphertext = _mm_shuffle_epi8 (ciphertext, lhquadexchange);
 	}
-	
+
 	if( keylength > 128 )
 	{
 		//7.apply fl and fl^-1 on ciphertext
@@ -796,10 +894,10 @@ __m128i encrypt(__m128i plaintext, __m128i kl, __m128i kr, __m128i ka, __m128i k
 			
 			//8.2 extract left 64 bits of cipher text
 			lefthalf = _mm_shuffle_epi8 (ciphertext, ctleftextracter);
-			
+
 			//8.3 apply f function on lefthalf and roundkey
 			lefthalf = f (lefthalf, roundkey);
-			
+
 			//8.4 swap quadwords of lefthalf
 			lefthalf = _mm_shuffle_epi8 (lefthalf, lhquadexchange);
 			
@@ -815,10 +913,10 @@ __m128i encrypt(__m128i plaintext, __m128i kl, __m128i kr, __m128i ka, __m128i k
 	ciphertext = _mm_shuffle_epi8 (ciphertext, lhquadexchange);
 	
 	//10.postwhitening
-	//7.1 obtain fl key
+	//10.1 obtain fl key
 	postwhiteningkey = getpostwhiteningkey (kl, kr, ka, kb, keylength);
 	
-	//7.2 apply function on ciphertext and flkey
+	//10.2 apply function on ciphertext and flkey
 	ciphertext = _mm_xor_si128 (ciphertext, postwhiteningkey);
 	
 	return ciphertext;
