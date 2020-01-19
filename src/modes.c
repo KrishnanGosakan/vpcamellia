@@ -86,6 +86,30 @@ __m128i get_m128i_variable_from_chararray(char *input)
 	return var;
 }
 
+__m128i get_kr_for_192keylength(char *key)
+{
+	__m128i kr;
+	
+	uint8_t singleblock[16];
+	int i;
+	int j=32;
+	for(i=0;i<16;i++)
+	{
+		singleblock[i] = 0;
+	}
+	
+    for(i=0;i<8;i++)
+    {
+    	singleblock[i] = getHexFromChar(key[j]) * 16 + getHexFromChar(key[j+1]);
+    	singleblock[i+8] = ~singleblock[i];
+    	j=j+2;
+    }
+    
+    kr = get_m128i_variable_from_uint8_array(singleblock);	
+	
+	return kr;
+}
+
 char *get_chararray_from_m128i_variable(__m128i var)
 {
 	char *res = (char *)malloc(16);
@@ -100,12 +124,12 @@ char *get_chararray_from_m128i_variable(__m128i var)
 
 char* ecb_128_encrypt(char *plaintextstring, char *keystring)
 {
+	char *cipherText;
+	
 	__m128i plainText, key;
 	__m128i keyright = _mm_setzero_si128();
 	__m128i ka, kb = _mm_setzero_si128();
 	__m128i ct;
-	
-	char *cipherText;
 	
 	int keylength = 128;
 	key       = get_m128i_variable_from_chararray(keystring);
@@ -120,9 +144,30 @@ char* ecb_128_encrypt(char *plaintextstring, char *keystring)
 	return cipherText;
 }
 
-char* ecb_192_encrypt(char *plainText, char *key)
+char* ecb_192_encrypt(char *plaintextstring, char *keystring)
 {
 	char *cipherText;
+	
+	__m128i plainText, keyleft;
+	__m128i keyright = _mm_setzero_si128();
+	__m128i ka, kb = _mm_setzero_si128();
+	__m128i ct;
+	
+	int keylength = 128;
+	keyleft       = get_m128i_variable_from_chararray(keystring);
+	keyright      = get_kr_for_192keylength(keystring);
+	
+	//print128_num (keyleft);
+	//print128_num (keyright);
+	
+	ka = key_schedule1 (keyleft, keyright);
+	kb = key_schedule2 (ka, keyleft, keyright);
+	
+	plainText = get_m128i_variable_from_chararray(plaintextstring);
+	
+    ct = encrypt (plainText, key, keyright, ka, kb, keylength);
+    
+    print128_num (ct);
 	
 	return cipherText;
 }
@@ -130,6 +175,21 @@ char* ecb_192_encrypt(char *plainText, char *key)
 char* ecb_256_encrypt(char *plainText, char *key)
 {
 	char *cipherText;
+	
+	/*__m128i plainText, key;
+	__m128i keyright = _mm_setzero_si128();
+	__m128i ka, kb = _mm_setzero_si128();
+	__m128i ct;
+	
+	int keylength = 128;
+	key       = get_m128i_variable_from_chararray(keystring);
+	ka = key_schedule1 (key, keyright);
+	
+	plainText = get_m128i_variable_from_chararray(plaintextstring);
+	
+    ct = encrypt (plainText, key, keyright, ka, kb, keylength);
+    
+    print128_num (ct);*/
 	
 	return cipherText;
 }

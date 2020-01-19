@@ -652,7 +652,18 @@ __m128i getflkey(int keyid, __m128i kl, __m128i kr, __m128i ka, __m128i kb, int 
 	}
 	else
 	{
-	
+		switch (keyid)
+		{
+			case 1:
+				flkey = doleftrotation (kr, 30);
+				break;
+			case 2:
+				flkey = doleftrotation (kl, 60);
+				break;
+			case 3:
+				flkey = doleftrotation (ka, 77);
+				break;
+		}
 	}
 	
 	return flkey;
@@ -668,7 +679,7 @@ __m128i getpostwhiteningkey(__m128i kl, __m128i kr, __m128i ka, __m128i kb, int 
 	}
 	else
 	{
-	
+		postwhiteningkey = doleftrotation (kb, 111);
 	}
 
 	return postwhiteningkey;

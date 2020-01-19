@@ -82,7 +82,12 @@ int main(int argc, char *argv[])
 		{
 			case ecb_mode:
 				if(encordec)
-					cipherText = ecb_128_encrypt (plainText, key);
+				{
+					if(keylength == 128)
+						cipherText = ecb_128_encrypt (plainText, key);
+					else if(keylength == 192)
+						cipherText = ecb_192_encrypt (plainText, key);
+				}
 				break;
 			case cbc_mode:
 				break;
