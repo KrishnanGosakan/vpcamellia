@@ -130,46 +130,90 @@ __m128i get_kr_for_256keylength(char *input)
 
 char *get_chararray_from_m128i_variable(__m128i var)
 {
-	char *res = (char *)malloc(16);
+	char *res = (char *)malloc(32);
 	
 	int64_t e0, e1;
 	e0 = _mm_extract_epi64 (var, 0);
 	e1 = _mm_extract_epi64 (var, 1);
-    sprintf(res,"%016"PRIx64"%016"PRIx64"\n", e0, e1);
+    sprintf(res,"%016"PRIx64"%016"PRIx64"", e0, e1);
 	
 	return res;
 }
 
+__m128i get_ith_block_from_input(char *input, int i)
+{
+	__m128i ithBlock;
+	
+	uint8_t singleblock[16];
+	int j,k;
+	j=i*32;
+	for(i=0;i<16;i++)
+    {
+    	if(input[j]=='\0')
+    		break;
+    	singleblock[i] = getHexFromChar(input[j]) * 16 + getHexFromChar(input[j+1]);
+    	j=j+2;
+    }
+    
+    int paddingValue = 16 - i;
+    while(i<16)
+    {
+    	singleblock[i] = paddingValue;
+    	i++;
+    }
+	
+	ithBlock = get_m128i_variable_from_uint8_array(singleblock);
+	
+	return ithBlock;
+}
+
 char* ecb_128_encrypt(char *plaintextstring, char *keystring)
 {
-	char *cipherText;
+	int numberOfBlocks = strlen(plaintextstring)/32 + 1;
 	
-	__m128i plainText, key;
+	char *cipherText = (char *)malloc(numberOfBlocks*32 + 1);
+	
+	__m128i inputblocks[numberOfBlocks];
+	int i;
+	for(i=0;i<numberOfBlocks;i++)
+		inputblocks[i] = get_ith_block_from_input (plaintextstring, i);
+	
+	__m128i keyleft;
 	__m128i keyright = _mm_setzero_si128();
 	__m128i ka, kb = _mm_setzero_si128();
-	__m128i ct;
 	
 	int keylength = 128;
-	key       = get_m128i_variable_from_chararray(keystring);
-	ka = key_schedule1 (key, keyright);
+	keyleft       = get_m128i_variable_from_chararray(keystring);
+	ka            = key_schedule1 (keyleft, keyright);
 	
-	plainText = get_m128i_variable_from_chararray(plaintextstring);
-	
-    ct = encrypt (plainText, key, keyright, ka, kb, keylength);
+	i=0;
+	while(i<numberOfBlocks)
+	{
+   		char *ctstring = get_chararray_from_m128i_variable(encrypt (inputblocks[i], keyleft, keyright, ka, kb, keylength));
+   		strcpy (cipherText + (i*32), ctstring);
+   		free(ctstring);
+   		i++;
+    }
     
-    print128_num (ct);
+    cipherText[numberOfBlocks*32] = '\0';
 
 	return cipherText;
 }
 
 char* ecb_192_encrypt(char *plaintextstring, char *keystring)
 {
-	char *cipherText;
+	int numberOfBlocks = strlen(plaintextstring)/32 + 1;
 	
-	__m128i plainText, keyleft;
-	__m128i keyright = _mm_setzero_si128();
-	__m128i ka, kb = _mm_setzero_si128();
-	__m128i ct;
+	char *cipherText = (char *)malloc(numberOfBlocks*32 + 1);
+	
+	__m128i inputblocks[numberOfBlocks];
+	int i;
+	for(i=0;i<numberOfBlocks;i++)
+		inputblocks[i] = get_ith_block_from_input (plaintextstring, i);
+	
+	__m128i keyleft;
+	__m128i keyright;
+	__m128i ka, kb;
 	
 	int keylength = 192;
 	keyleft       = get_m128i_variable_from_chararray(keystring);
@@ -178,23 +222,34 @@ char* ecb_192_encrypt(char *plaintextstring, char *keystring)
 	ka = key_schedule1 (keyleft, keyright);
 	kb = key_schedule2 (ka, keyleft, keyright);
 	
-	plainText = get_m128i_variable_from_chararray(plaintextstring);
-	
-    ct = encrypt (plainText, keyleft, keyright, ka, kb, keylength);
+	i=0;
+	while(i<numberOfBlocks)
+	{
+   		char *ctstring = get_chararray_from_m128i_variable(encrypt (inputblocks[i], keyleft, keyright, ka, kb, keylength));
+   		strcpy (cipherText + (i*32), ctstring);
+   		free(ctstring);
+   		i++;
+    }
     
-    print128_num (ct);
+    cipherText[numberOfBlocks*32] = '\0';
 	
 	return cipherText;
 }
 
 char* ecb_256_encrypt(char *plaintextstring, char *keystring)
 {
-	char *cipherText;
+	int numberOfBlocks = strlen(plaintextstring)/32 + 1;
 	
-	__m128i plainText, keyleft;
-	__m128i keyright = _mm_setzero_si128();
-	__m128i ka, kb = _mm_setzero_si128();
-	__m128i ct;
+	char *cipherText = (char *)malloc(numberOfBlocks*32 + 1);
+	
+	__m128i inputblocks[numberOfBlocks];
+	int i;
+	for(i=0;i<numberOfBlocks;i++)
+		inputblocks[i] = get_ith_block_from_input (plaintextstring, i);
+	
+	__m128i keyleft;
+	__m128i keyright;
+	__m128i ka, kb;
 	
 	int keylength = 256;
 	keyleft       = get_m128i_variable_from_chararray(keystring);
@@ -203,11 +258,16 @@ char* ecb_256_encrypt(char *plaintextstring, char *keystring)
 	ka = key_schedule1 (keyleft, keyright);
 	kb = key_schedule2 (ka, keyleft, keyright);
 	
-	plainText = get_m128i_variable_from_chararray(plaintextstring);
-	
-    ct = encrypt (plainText, keyleft, keyright, ka, kb, keylength);
+	i=0;
+	while(i<numberOfBlocks)
+	{
+   		char *ctstring = get_chararray_from_m128i_variable(encrypt (inputblocks[i], keyleft, keyright, ka, kb, keylength));
+   		strcpy (cipherText + (i*32), ctstring);
+   		free(ctstring);
+   		i++;
+    }
     
-    print128_num (ct);
+    cipherText[numberOfBlocks*32] = '\0';
 	
 	return cipherText;
 }
