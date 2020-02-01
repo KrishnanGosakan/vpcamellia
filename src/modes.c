@@ -110,6 +110,24 @@ __m128i get_kr_for_192keylength(char *key)
 	return kr;
 }
 
+__m128i get_kr_for_256keylength(char *input)
+{
+	__m128i kr;
+	
+	uint8_t singleblock[16];
+	int i;
+	int j=32;
+	for(i=0;i<16;i++)
+    {
+    	singleblock[i] = getHexFromChar(input[j]) * 16 + getHexFromChar(input[j+1]);
+    	j=j+2;
+    }
+    
+    kr = get_m128i_variable_from_uint8_array(singleblock);	
+	
+	return kr;
+}
+
 char *get_chararray_from_m128i_variable(__m128i var)
 {
 	char *res = (char *)malloc(16);
@@ -169,24 +187,27 @@ char* ecb_192_encrypt(char *plaintextstring, char *keystring)
 	return cipherText;
 }
 
-char* ecb_256_encrypt(char *plainText, char *key)
+char* ecb_256_encrypt(char *plaintextstring, char *keystring)
 {
 	char *cipherText;
 	
-	/*__m128i plainText, key;
+	__m128i plainText, keyleft;
 	__m128i keyright = _mm_setzero_si128();
 	__m128i ka, kb = _mm_setzero_si128();
 	__m128i ct;
 	
 	int keylength = 256;
-	key       = get_m128i_variable_from_chararray(keystring);
-	ka = key_schedule1 (key, keyright);
+	keyleft       = get_m128i_variable_from_chararray(keystring);
+	keyright      = get_kr_for_256keylength(keystring);
+
+	ka = key_schedule1 (keyleft, keyright);
+	kb = key_schedule2 (ka, keyleft, keyright);
 	
 	plainText = get_m128i_variable_from_chararray(plaintextstring);
 	
-    ct = encrypt (plainText, key, keyright, ka, kb, keylength);
+    ct = encrypt (plainText, keyleft, keyright, ka, kb, keylength);
     
-    print128_num (ct);*/
+    print128_num (ct);
 	
 	return cipherText;
 }

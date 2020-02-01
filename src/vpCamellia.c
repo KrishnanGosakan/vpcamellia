@@ -87,6 +87,8 @@ int main(int argc, char *argv[])
 						cipherText = ecb_128_encrypt (plainText, key);
 					else if(keylength == 192)
 						cipherText = ecb_192_encrypt (plainText, key);
+					else if(keylength == 256)
+						cipherText = ecb_256_encrypt (plainText, key);
 				}
 				break;
 			case cbc_mode:
