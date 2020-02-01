@@ -4,7 +4,7 @@ An implementation of camellia through vector permute instructions. This work is 
 To build this repository, move inside the build directory and start the build.sh file.
 ```
 cd build
-sh build.sh
+make
 ```
 
 For this code to work, your machine must support AVX2 instruction set.
